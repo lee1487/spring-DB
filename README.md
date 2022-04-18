@@ -399,5 +399,44 @@ MemberRepositoryV0Test - 회원 삭제 추가
     커넥션 풀로 hikariCP를 제공한다. 성능, 사용의 편리함, 안전성 측면에서 이미 검증이 되었기 때문에 
 	커넥션 풀을 사용할 때는 고민할 것 없이 hikariCP를 사용하면 된다. 실무에서도 레거시 프로젝트가 
 	아닌 이상 대부분 hikariCP를 사용한다.
+```
 
+### DataSource 이해 
+```
+커넥션을 얻는 방법은 앞서 학습한 JDBC DriverManager를 직접 사용하거나, 커넥션 풀을 사용하는 등 
+다양한 방법이 존재한다. 
+
+DriverManager를 통해 커넥션 획득 
+  - 우리가 앞서 JDBC로 개발한 애플리케이션 처럼 DriverManager를 통해서 커넥션을 획득하다가, 
+    커넥션 풀을 사용하는 방법으로 변경하려면 어떻게 해야할까?
+
+DriverManager를 통해 커넥션을 획득하다가 커넥션 풀로 변경시 문제 
+  - 예를 들어서 애플리케이션 로직에서 DriverManager를 사용해서 커넥션을 획득하다가 HikariCP 같은 
+    커넥션 풀을 사용하도록 변경하면 커넥션을 획득하는 애플리케이션 코드도 함께 변경해야 한다. 의존관계가 
+	DriverManager에서 HikariCP로 변경되기 때문이다. 물론 둘의 사용법도 조금씩 다를 것이다.
+	
+커넥션을 획득하는 방법을 추상화 
+  - 자바에서는 이런 문제를 해결하기 위해 javax.sql.DataSource라는 인터페이스를 제공한다. 
+  - DataSource는 커넥션을 획득하는 방법을 추상화 하는 인터페이스이다. 
+  - 이 인터페이스의 핵심 기능은 커넥션 조회 하나이다.(다른 일부 기능도 있지만 크게 중요하지 않다.)
+
+DataSource 핵심 기능만 축약 
+  public interface DataSource {
+	Connection getConnection() throws SQLException;
+  }
+
+정리 
+  - 대부분의 커넥션 풀은 DataSource 인터페이스를 이미 구현해두었다. 따라서 개발자는 DBCP2 커넥션 풀, 
+    HikariCP 커넥션 풀의 코드를 직접 의존하는 것이 아니라 DataSource 인터페이스에만 의존하도록 
+	애플리케이션 로직을 작성하면 된다. 
+  - 커넥션 풀 구현 기술을 변경하고 싶으면 해당 구현체로 갈아 끼우기만 하면 된다. 
+  - DriverManager는 DataSource 인터페이스를 사용하지 않는다. 따라서 DriverManager는 
+    직접 사용해야 한다. 따라서 DriverManager를 사용하다가 DataSource 기반의 커넥션 풀을 
+	사용하도록 변경하면 관련 코드를 다 고쳐야 한다. 이런 문제를 해결하기 위해 스프링은 DriverManager도 
+	DataSource를 통해서 사용할 수 있도록 DriverManagerDataSource라는 DataSource를 
+	구현한 클래스를 제공한다. 
+  - 자바는 DataSource를 통해 커넥션을 획득하는 방법을 추상화했다. 이제 애플리케이션 로직은 
+    DataSource 인터페이스에만 의존하면 된다. 덕분에 DriverManagerDataSource를 통해서 
+	DriverManager를 사용하다가 커넥션 풀을 사용하도록 코드를 변경해도 애플리케이션 로직은 
+	변경하지 않아도 된다.
 ```

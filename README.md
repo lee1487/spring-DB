@@ -297,3 +297,45 @@ MemberRepositoryV0Test - 회원 조회 추가
     - 이 테스트는 2번 실행하면 PK 중복 오류가 발생한다. 이 경우 delete from member 쿼리로 
 	  데이터를 삭제한 다음에 다시 실행하자.
 ```
+
+### JDBC 개발 - 수정, 삭제 
+```
+수정과 삭제는 등록과 비슷하다. 등록, 수정, 삭제처럼 데이터를 변경하는 쿼리는 executeUpdate()를 
+사용하면 된다. 
+
+MemberRepositoryV0 - 회원 수정 추가 
+  - executeUpdate()는 쿼리를 실행하고 영향받는 row수를 반환한다. 여기서는 하나의 데이터만 
+    변경하기 때문에 결과로 1이 반환된다. 만약 회원이 100명이고, 모든 회원의 데이터를 한번에 
+	수정하는 update sql을 실행하면 결과는 100이 된다. 
+
+MemberRepositoryV0Test - 회원 수정 추가 
+  - 회원 데이터의 money를 10000 -> 20000으로 수정하고 DB에서 데이터를 다시 조회해서 20000으로 
+    변경 되었는지 검증한다. 
+
+  실행 로그 
+    - MemberRepositoryV0 - resultSize=1
+	  - pstmt.executeUpdate()의 결과가 1인 것을 확인할 수 있다. 이것은 해당 SQL에 영향을 받은 
+	    로우 수가 1개라는 뜻이다. 
+
+  데이터베이스에서 조회하면 memberV0의 money가 20000으로 변경된 것을 확인할 수 있다. 
+    - select * from member;
+  
+  참고 
+    - 이 테스트는 2번 실행하면 PK 중복 오류가 발생한다. 이 경우 delete from member 쿼리로 데이터를 
+      삭제한 다음에 다시 실행하자. 
+
+이번에는 회원을 삭제해보자. 
+
+MemberRepositoryV0 - 회원 삭제 추가 
+  - 쿼리만 변경되고 내용은 거의 같다 
+
+MemberRepositoryV0Test - 회원 삭제 추가
+  - 회원을 삭제한 다음 findById()를 통해서 조회한다. 회원이 없기 때문에 NoSuchElementException이 
+    발생한다. assertThatThrowBy는 해당 예외가 발생해야 검증에 성공한다. 
+
+  - 참고 	
+    - 마지막에 회원을 삭제하기 때문에 테스트가 정상 수행되면, 이제부터는 같은 테스트를 반복해서 실행할 수 있다. 
+	  물론 테스트 중간에 오류가 발생해서 삭제 로직을 수행할 수 없다면 테스트를 반복해서 실행할 수 없다. 
+	
+	- 트랜잭션을 활용하면 이 문제를 깔끔하게 해결할 수 있는데, 자세한 내용은 뒤에서 설명한다. 
+```

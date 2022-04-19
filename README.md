@@ -515,3 +515,42 @@ MyPool connection adder
 	로그를 보면 사용중인 커넥션 active=2, 풀에서 대기 상태인 커넥션 idle=8을 확인할 수 있다. 
 	MyPool - After adding stats (total=10, active=2, idle=8, waiting=0)
 ```
+
+### DataSource 적용 
+```
+이번에는 애플리케이션에 DataSource를 적용해보자. 
+
+기존 코드를 유지하기 위해 기존 코드를 복사해서 새로 만들자 
+  MemberRepositoryV0 -> MemberRepositoryV1
+  MemberRepositoryV0Test -> MemberRepositoryV1Test
+
+MemberRepositoryV1
+  - Datasource 의존관계 주입 
+    - 외부에서 DataSource를 주입 받아서 사용한다. 이제 직접 만든 DBConnectionUtil을 
+	  사용하지 않아도 된다. 
+	- DataSource는 표준 인터페이스 이기 때문에 DriverManagerDataSource에서 
+	  HikariDataSource로 변경되어도 해당 코드를 변경하지 않아도 된다. 
+
+  - JdbcUtils 편의 메서드 
+    - 스프링은 JDBC를 편리하게 다룰 수 있는 Jdbcutils라는 편의 메서드를 제공한다. 
+	- JdbcUtils를 사용하면 커넥션을 좀 더 편리하게 닫을 수 있다. 
+
+MemberRepositoryV1Test
+  - MemberRepositoryV1은 DataSource 의존관계 주입이 필요하다. 
+
+DriverManagerDataSource 사용
+  - DriverManagerDataSource를 사용하면 conn0~5 번호를 통해서 항상 새로운 커넥션이 
+    생성되어서 사용되는 것을 확인할 수 있다. 
+
+HikariDataSource 사용 
+  - 커넥션 풀 사용시 conn0 커넥션이 재사용 된 것을 확인할 수 있다. 
+  - 테스트는 순서대로 실행되기 때문에 커넥션을 사용하고 다시 돌려주는 것을 반복한다. 따라서 
+    conn0만 사용된다. 
+  - 웹 애플리케이션에 동시에 여러 요청이 들어오면 여러 쓰레드에서 커넥션 풀의 커넥션을 다양하게 
+    가져가는 상황을 확인할 수 있다. 
+
+DI 
+  - DriverManagerDataSource -> HikariDataSource로 변경해도 MemberRepositoryV1의 
+    코드는 전혀 변경하지 않아도 된다. MemberRepositoryV1는 DataSource 인터페이스에만 
+	의존하기 때문이다. 이것이 DataSource를 사용하는 장점이다.(DI + OCP)
+```

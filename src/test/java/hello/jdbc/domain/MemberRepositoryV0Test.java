@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import hello.jdbc.repository.MemberRepositoryV0;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

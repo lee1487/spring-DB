@@ -16,6 +16,7 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import com.zaxxer.hikari.HikariDataSource;
 
 import hello.jdbc.connection.ConnectionConst;
+import hello.jdbc.repository.MemberRepositoryV1;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

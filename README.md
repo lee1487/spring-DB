@@ -1741,3 +1741,40 @@ MemberServiceV3_2Test
 	포인트컷: TransactionAttributeSourcePointcut
 	어드바이스: TransactionInterceptor
 ```
+
+### 트랜잭션 문제 해결 - 트랜잭션 AOP 적용 
+```
+트랜잭션 AOP를 사용하는 새로운 서비스 클래스를 만들자 
+
+MemberServiceV3_3 
+  - 순수한 비즈니스 로직만 남기고, 트랜잭션 관련 코드는 모두 제거했다. 
+  - 스프링이 제공하는 트랜잭션 AOP를 적용하기 위해 @Transactional 애노테이션을 추가했다. 
+  - @Transactional 애노테이션은 메서드에 붙여도 되고, 클래스에 붙여도 된다. 클래스에 붙이면 
+    외부에서 호출 가능한 public 메서드가 AOP 적용 대상이 된다. 
+
+MemberServiceV3_3Test
+  - @SpringBootTest
+    - 스프링 AOP를 적용하려면 스프링 컨테이너가 필요하다. 이 애노테이션이 있으면 테스트시
+	  스프링 부트를 통해 스프링 컨테이너를 생성한다. 그리고 테스트에서 @Autowired등을 통해 
+	  스프링 컨테이너가 관리하는 빈들을 사용할 수 있다. 
+  - @TestConfiguration
+    - 테스트 안에서 내부 설정 클래스를 만들어서 사용하면서 이 애노테이션을 붙이면, 
+	  스프링 부트가 자동으로 만들어주는 빈들에 추가로 필요한 스프링 빈들을 등록하고 
+	  테스트를 수행할 수 있다. 
+  - TestConfig 
+    - DataSource 
+	  - 스프링에서 기본으로 사용할 데이터소스를 스프링 빈으로 등록한다. 추가로 트랜잭션 
+	    매니저에서도 사용한다. 
+	- DataSourceTransactionManager
+	  - 트랜잭션 매니저를 스프링 빈으로 등록한다. 
+	  - 스프링이 제공하는 트랜잭션 AOP는 스프링 빈에 등록된 트랜잭션 매니저를 찾아서 
+	    사용하기 때문에 트랜잭션 매니저를 스프링 빈으로 등록해두어야 한다. 
+
+  AOP 프록시 적용 확인 
+    - 먼저 AOP 프록시가 적용되었는지 확인해보자. AopCheck()의 실행 결과를 보면 
+	  memberService에 EnhancerBySpringCGLIB..라는 부분을 통해 프록시(CGLIB)가 
+	  적용된 것을 확인할 수 있다. 
+	  memberRepository에는 AOP를 적용하지 않았기 때문에 프록시가 적용되지 않는다.
+	- 나머지 테스트 코드들을 실행해보면 트랜잭션이 정상 수행되고, 실패시 정상 롤백된 것을 
+	  확인할 수 있다. 
+```

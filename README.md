@@ -1500,3 +1500,54 @@ PlatformTransactionManager 인터페이스
 	    데이터에 접근할 수 있다. 
 		쓰레드 로컬에 대한 자세한 내용은 스프링 핵심 원리 - 고급편 강의를 참고하자.
 ```
+
+### 트랜잭션 문제 해결 - 트랜잭션 매니저1 
+```
+이제 본격적으로 애플리케이션 코드에 트랜잭션 매니저를 적용해보자. 
+
+MemberRepositoryV3
+  - 커넥션을 파라미터로 전달하는 부분이 모두 제거되었다. 
+  
+  DataSourceUtils.getConnection() 
+    - getConnection()에서 DataSourceUtils.getConnection()를 사용하도록 변경된 부분을 
+	  특히 주의해야 한다. 
+	- DataSourceUtils.getConnection()는 다음과 같이 동작한다. 
+	  - 트랜잭션 동기화 매니저가 관리하는 커넥션이 있으면 해당 커넥션을 반환한다. 
+	  - 트랜잭션 동기화 매니저가 관리하는 커넥션이 없는 경우 새로운 커넥션을 생성해서 반환한다. 
+
+  DataSourceUtils.releaseConnection() 
+    - close()에서 DataSourceUtils.releaseConnection()를 사용하도록 변경된 부분을 특히 
+	  주의해야 한다. 커넥션을 con.close()를 사용해서 직접 닫아버리면 커넥션이 유지되지 않는 문제가 
+	  발생한다. 이 커넥션은 이후 로직은 물론이고, 트랜잭션을 종료(커밋,롤백)할 때 까지 살아있어야 한다. 
+	- DataSourceUtils.releaseConnection()을 사용하면 커넥션을 바로 닫는 것이 아니다. 
+	  - 트랜잭션을 사용하기 위해 동기화된 커넥션은 커넥션을 닫지 않고 그대로 유지해준다. 
+	  - 트랜잭션 동기화 매니저가 관리하는 커넥션이 없는 경우 해당 커넥션을 닫는다. 
+	
+
+이제 트랜잭션 매니저를 사용하는 서비스 코드를 작성해보자. 
+
+MemberServiceV3_1 
+  - private final PlatformTransactionManager transactionManager
+    - 트랜잭션 매니저를 주입 받는다. 지금은 JDBC 기술을 사용하기 때문에 
+	  DataSourceTransactionManager 구현체를 주입 받아야 한다. 
+	- 물론 JPA 같은 기술로 변경되면 JpaTransactionManager를 주입 받으면 된다. 
+  - transactionManager.getTransaction()
+    - 트랜잭션을 시작한다 
+	- TransactionStatus status 를 반환한다. 현재 트랜잭션의 상태 정보가 포함되어 있다. 
+	  이후 트랜잭션을 커밋, 롤백할 때 필요하다. 
+  - new DefaultTransactionDefinition() 
+    - 트랜잭션과 관련된 옵션을 지정할 수 있다. 자세한 내용은 뒤에서 설명한다. 
+  - transactionManager.commit(status)
+    - 트랜잭션이 성공하면 이 로직을 호출해서 커밋하면 된다. 
+  - transactionManager.rollback(status)
+    - 문제가 발생하면 이 로직을 호출해서 트랜잭션을 롤백하면 된다. 
+
+MemberServiceV3_1Test
+  초기화 코드 설명 
+    - new DataSourceTransactionManager(dataSource)
+	  - JDBC 기술을 사용하므로, JDBC용 트랜잭션 매니저(DataSourceTransactionManager)를 
+	    선택해서 서비스에 주입한다. 
+	  - 트랜잭션 매니저는 데이터소스를 통해 커넥션을 생성하므로 DataSource가 필요하다. 
+
+  - 테스트 해보면 모든 결과가 정상 동작하는 것을 확인할 수 있다. 당연히 롤백 기능도 잘 동작한다.
+```
